@@ -7,7 +7,8 @@
 #   prompt 5         (dashboard, não entra no job)
 #   prompt 6         + views de negócio e auditoria de metadado
 #
-# Hoje ele tem UMA tarefa só: confirmar que os 10 arquivos chegaram ao Volume.
+# Hoje ele tem DUAS tarefas: confirmar que os 10 arquivos chegaram ao Volume,
+# e depois transformá-los em tabela Delta na bronze.
 resources:
   jobs:
     rotaperfume_pipeline:
@@ -26,3 +27,13 @@ resources:
           # Sem cluster nem environment_key: no Free Edition o job roda em
           # compute serverless por padrão, e o notebook_task não precisa
           # de spec de ambiente para isso.
+
+        - task_key: bronze_ingestao
+          depends_on:
+            - task_key: raw_conferencia
+          # A ordem é o conteúdo: se a conferência falhar (arquivo ausente
+          # ou vazio), a bronze nem começa a rodar.
+          notebook_task:
+            notebook_path: ../src/bronze/ingestao.py
+            base_parameters:
+              catalog: ${var.catalog}
