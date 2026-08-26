@@ -1,0 +1,28 @@
+# rotaperfume_pipeline — o job cresce uma tarefa por prompt da noite 2:
+#
+#   prompt 1 (hoje)  raw_conferencia
+#   prompt 2         + bronze_ingestao
+#   prompt 3         + silver ×4 (paralelo)
+#   prompt 4         + gold_dimensoes, gold_fato_vendas, gold_marts, testes
+#   prompt 5         (dashboard, não entra no job)
+#   prompt 6         + views de negócio e auditoria de metadado
+#
+# Hoje ele tem UMA tarefa só: confirmar que os 10 arquivos chegaram ao Volume.
+resources:
+  jobs:
+    rotaperfume_pipeline:
+      name: rotaperfume_pipeline
+
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?" # todo dia às 6h
+        timezone_id: America/Sao_Paulo
+
+      tasks:
+        - task_key: raw_conferencia
+          notebook_task:
+            notebook_path: ../src/raw/conferencia.py
+            base_parameters:
+              catalog: ${var.catalog}
+          # Sem cluster nem environment_key: no Free Edition o job roda em
+          # compute serverless por padrão, e o notebook_task não precisa
+          # de spec de ambiente para isso.

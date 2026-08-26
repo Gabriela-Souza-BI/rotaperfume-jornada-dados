@@ -1,0 +1,34 @@
+# O catálogo em si (lakehouse_rotaperfume) é criado via scripts/criar-catalogo.sh
+# — a API do Unity Catalog não cria catálogo no Free Edition. Este arquivo
+# cuida do resto: os três schemas do medallion e o volume de arquivos raw.
+resources:
+  schemas:
+    bronze:
+      catalog_name: ${var.catalog}
+      name: bronze
+      comment: >
+        Ingestão crua. O dado chega aqui exatamente como saiu do ERP e do
+        CRM — inclusive a sujeira. Nada é limpo nesta camada.
+    silver:
+      catalog_name: ${var.catalog}
+      name: silver
+      comment: >
+        Dado limpo, deduplicado e tipado, com contrato de qualidade
+        (CONSTRAINT). Preenchido no prompt 3.
+    gold:
+      catalog_name: ${var.catalog}
+      name: gold
+      comment: >
+        Fatos e dimensões modelados para consumo — dashboard, Genie e
+        análise. Preenchido no prompt 4.
+
+  volumes:
+    raw:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.bronze.name}
+      name: raw
+      volume_type: MANAGED
+      comment: >
+        Os CSVs originais de ERP e CRM, exatamente como saíram do gerador.
+        Guarda arquivo, não tabela — é para onde os dados chegam antes de
+        virarem Delta na bronze.
