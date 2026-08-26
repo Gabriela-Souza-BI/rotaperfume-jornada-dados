@@ -7,8 +7,9 @@
 #   prompt 5         (dashboard, não entra no job)
 #   prompt 6         + views de negócio e auditoria de metadado
 #
-# Hoje ele tem DUAS tarefas: confirmar que os 10 arquivos chegaram ao Volume,
-# e depois transformá-los em tabela Delta na bronze.
+# Hoje ele tem SEIS tarefas: a conferência de chegada, a ingestão bronze, e
+# as quatro tarefas de silver — que rodam EM PARALELO entre si, porque
+# nenhuma depende da outra, só de bronze_ingestao ter terminado.
 resources:
   jobs:
     rotaperfume_pipeline:
@@ -37,3 +38,35 @@ resources:
             notebook_path: ../src/bronze/ingestao.py
             base_parameters:
               catalog: ${var.catalog}
+
+        - task_key: silver_clientes
+          depends_on:
+            - task_key: bronze_ingestao
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/silver/01-clientes.sql
+
+        - task_key: silver_pedidos
+          depends_on:
+            - task_key: bronze_ingestao
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/silver/02-pedidos.sql
+
+        - task_key: silver_itens_e_produtos
+          depends_on:
+            - task_key: bronze_ingestao
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/silver/03-itens-e-produtos.sql
+
+        - task_key: silver_crm_e_financeiro
+          depends_on:
+            - task_key: bronze_ingestao
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/silver/04-crm-e-financeiro.sql
