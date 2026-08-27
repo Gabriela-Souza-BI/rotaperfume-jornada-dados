@@ -7,9 +7,11 @@
 #   prompt 5         (dashboard, não entra no job)
 #   prompt 6         + views de negócio e auditoria de metadado
 #
-# Hoje ele tem SEIS tarefas: a conferência de chegada, a ingestão bronze, e
-# as quatro tarefas de silver — que rodam EM PARALELO entre si, porque
-# nenhuma depende da outra, só de bronze_ingestao ter terminado.
+# Hoje ele tem DEZ tarefas: raw, bronze, as quatro de silver em paralelo, e
+# a cadeia da gold — dimensões, fato, marts e testes, cada uma esperando a
+# anterior. Os testes rodam por ÚLTIMO e são obrigatórios: se um falhar, o
+# job para e o dashboard (prompt 5) fica com o dado de ontem, não com o
+# dado errado de hoje.
 resources:
   jobs:
     rotaperfume_pipeline:
@@ -70,3 +72,38 @@ resources:
             warehouse_id: ${var.warehouse_id}
             file:
               path: ../src/silver/04-crm-e-financeiro.sql
+
+        - task_key: gold_dimensoes
+          depends_on:
+            - task_key: silver_clientes
+            - task_key: silver_pedidos
+            - task_key: silver_itens_e_produtos
+            - task_key: silver_crm_e_financeiro
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/05-dimensoes.sql
+
+        - task_key: gold_fato_vendas
+          depends_on:
+            - task_key: gold_dimensoes
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/06-fato-vendas.sql
+
+        - task_key: gold_marts
+          depends_on:
+            - task_key: gold_fato_vendas
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/07-marts.sql
+
+        - task_key: testes
+          depends_on:
+            - task_key: gold_marts
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/08-testes.sql
