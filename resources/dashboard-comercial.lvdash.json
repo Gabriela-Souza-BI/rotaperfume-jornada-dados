@@ -7,21 +7,26 @@
         "-- Um dataset só, e de propósito: quando os widgets compartilham o dataset,\n",
         "-- clicar numa marca filtra a tela inteira. Datasets separados quebram isso.\n",
         "-- Repare no SQL: nenhum CAST, nenhum try_to_date. É o que a silver comprou.\n",
+        "-- receita/custo/margem vêm com sufixo _raw de propósito: o nome da\n",
+        "-- coluna bruta não pode coincidir com o displayName de um campo\n",
+        "-- calculado (SQL é case-insensitive), senão SUM(`receita`) se\n",
+        "-- referencia a si mesmo — é o erro 'Circular reference detected'.\n",
         "SELECT data_pedido, ano, mes, canal, segmento, cidade,\n",
         "       marca, categoria, nota_olfativa,\n",
-        "       pedido_id, cliente_id, quantidade, receita, custo, margem, devolucao\n",
+        "       pedido_id, cliente_id, quantidade, devolucao,\n",
+        "       receita AS receita_raw, custo AS custo_raw, margem AS margem_raw\n",
         "FROM fato_vendas\n"
       ],
       "columns": [
         {
           "displayName": "Receita",
           "description": "Soma da receita, com devolução (negativa) inclusa.",
-          "expression": "SUM(`receita`)"
+          "expression": "SUM(`receita_raw`)"
         },
         {
           "displayName": "Margem",
           "description": "Receita menos custo do produto.",
-          "expression": "SUM(`margem`)"
+          "expression": "SUM(`margem_raw`)"
         },
         {
           "displayName": "Pedidos",
@@ -31,12 +36,12 @@
         {
           "displayName": "Ticket médio",
           "description": "Receita dividida pelo número de pedidos.",
-          "expression": "SUM(`receita`) / NULLIF(COUNT(DISTINCT `pedido_id`), 0)"
+          "expression": "SUM(`receita_raw`) / NULLIF(COUNT(DISTINCT `pedido_id`), 0)"
         },
         {
           "displayName": "Margem %",
           "description": "Margem sobre receita.",
-          "expression": "SUM(`margem`) / NULLIF(SUM(`receita`), 0)"
+          "expression": "SUM(`margem_raw`) / NULLIF(SUM(`receita_raw`), 0)"
         }
       ]
     },
