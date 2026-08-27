@@ -7,11 +7,12 @@
 #   prompt 5         (dashboard, não entra no job)
 #   prompt 6         + views de negócio e auditoria de metadado
 #
-# Hoje ele tem DEZ tarefas: raw, bronze, as quatro de silver em paralelo, e
-# a cadeia da gold — dimensões, fato, marts e testes, cada uma esperando a
-# anterior. Os testes rodam por ÚLTIMO e são obrigatórios: se um falhar, o
-# job para e o dashboard (prompt 5) fica com o dado de ontem, não com o
-# dado errado de hoje.
+# Hoje ele fecha com DOZE tarefas: raw, bronze, as quatro de silver em
+# paralelo, a cadeia da gold (dimensões, fato, marts), e dali em diante DUAS
+# ramificações em paralelo — testes (qualidade) e metricas_de_negocio →
+# auditoria_de_metadado (as views de negócio e a checagem de que nenhuma
+# ficou sem COMMENT). Metadado faltando é bug, e quebra o job igual a um
+# teste de qualidade.
 resources:
   jobs:
     rotaperfume_pipeline:
@@ -107,3 +108,19 @@ resources:
             warehouse_id: ${var.warehouse_id}
             file:
               path: ../src/gold/08-testes.sql
+
+        - task_key: metricas_de_negocio
+          depends_on:
+            - task_key: gold_marts
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/09-metricas-negocio.sql
+
+        - task_key: auditoria_de_metadado
+          depends_on:
+            - task_key: metricas_de_negocio
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/10-auditoria-metadado.sql

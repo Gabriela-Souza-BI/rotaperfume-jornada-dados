@@ -1,0 +1,21 @@
+# O Genie space como CÓDIGO.
+#
+# Ontem o Genie foi plugado direto na bronze, com o aviso ao vivo de que podia
+# errar — porque ninguém tinha limpado aquele dado. Hoje ele lê a gold, que tem
+# COMMENT em toda coluna, views com nome de negócio e instrução escrita.
+#
+# O modelo é o MESMO. O que mudou foi tudo que está embaixo dele.
+#
+# E repare que ele também é um arquivo no Git. As instruções de negócio — a
+# regra de sazonalidade invertida, o glossário, como calcular margem — passam a
+# ter histórico, revisão e rollback, igual a qualquer outro código.
+
+resources:
+  genie_spaces:
+    genie_comercial:
+      title: Rota do Perfume · Comercial
+      description: >-
+        Perguntas de negócio sobre a gold da Rota do Perfume, em português.
+        Sabe que o pico da distribuidora é o mês ANTERIOR à data comemorativa.
+      file_path: ../resources/comercial.geniespace.json
+      warehouse_id: ${var.warehouse_id}

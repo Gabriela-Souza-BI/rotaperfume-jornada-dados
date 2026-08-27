@@ -94,6 +94,45 @@ COMMENT ON TABLE lakehouse_rotaperfume.gold.fato_vendas IS
    fica DENTRO, com quantidade e receita negativas — é o que faz este fato
    conformar com silver.pedidos (R$ 102.303.828,05 nas duas camadas).';
 
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.pedido_id IS
+  'Identificador do pedido. Um pedido tem várias linhas neste fato, uma
+   por item.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.item_id IS
+  'Identificador do item de pedido — a chave de linha deste fato.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.data_pedido IS
+  'Data em que o pedido foi feito, já corrigida (dois formatos na
+   origem).';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.ano IS
+  'Ano do pedido. Coluna de partição.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.mes IS
+  'Mês do pedido, de 1 a 12. Coluna de partição. Lembre da sazonalidade
+   invertida: o pico da distribuidora é o mês ANTERIOR à data
+   comemorativa (abril, junho, outubro).';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.canal IS
+  'Canal pelo qual o pedido chegou: Visita, Telefone, App ou WhatsApp.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.cliente_id IS
+  'Cliente que comprou, já resolvido para o cadastro sobrevivente da
+   deduplicação (não aponta para cliente_id descartado).';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.razao_social IS
+  'Nome do cliente.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.segmento IS
+  'Tipo de varejo do cliente (perfumaria, farmácia, revendedora etc.).';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.cidade IS
+  'Cidade do cliente.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.vendedor_id IS
+  'Vendedor responsável pelo pedido.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.sku IS
+  'Produto vendido nesta linha.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.categoria IS
+  'Categoria do produto (Eau de Parfum, Óleo Concentrado, Kit Presente
+   etc.).';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.marca IS
+  'Marca do produto.';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.nota_olfativa IS
+  'Família olfativa do produto (Âmbar, Sândalo, Almíscar etc.).';
+COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.preco_praticado IS
+  'Preço unitário efetivamente cobrado, já com desconto comercial
+   aplicado.';
 COMMENT ON COLUMN lakehouse_rotaperfume.gold.fato_vendas.quantidade IS
   'Sinal preservado: negativa quando o item é devolução. Nunca use
    quantidade_abs aqui — é isso que mantém receita e quantidade

@@ -2,7 +2,32 @@
 -- Lê SÓ da silver. Cada dimensão é uma linha por chave de negócio, pronta
 -- para JOIN direto com o fato — sem cálculo extra do lado de quem consome.
 
+-- Mesma armadilha do fato_vendas: a deduplicação (silver/01-clientes.sql)
+-- descartou até 40 cliente_id, mas pedidos antigos ainda apontam para o id
+-- descartado. Sem este mapa, o cliente sobrevivente pareceria ter comprado
+-- menos do que comprou de verdade.
 CREATE OR REPLACE TABLE lakehouse_rotaperfume.gold.dim_cliente AS
+WITH mapa_cliente AS (
+  SELECT cliente_id AS cliente_id_original, cliente_id AS cliente_id_resolvido
+  FROM lakehouse_rotaperfume.silver.clientes
+  UNION ALL
+  SELECT explode(cliente_ids_duplicados) AS cliente_id_original, cliente_id AS cliente_id_resolvido
+  FROM lakehouse_rotaperfume.silver.clientes
+  WHERE cliente_ids_duplicados IS NOT NULL
+),
+-- pedido CANCELADO não conta como compra: nem para "cliente comprou",
+-- nem para "quando foi a última vez que comprou".
+pedidos_do_cliente AS (
+  SELECT m.cliente_id_resolvido AS cliente_id,
+         MIN(p.data_pedido)     AS data_primeiro_pedido,
+         MAX(p.data_pedido)     AS data_ultimo_pedido,
+         COUNT(*)               AS total_pedidos,
+         SUM(p.valor_liquido)   AS receita_acumulada
+  FROM lakehouse_rotaperfume.silver.pedidos p
+  JOIN mapa_cliente m ON m.cliente_id_original = p.cliente_id
+  WHERE NOT p.cancelado
+  GROUP BY m.cliente_id_resolvido
+)
 SELECT
   c.cliente_id,
   c.razao_social,
@@ -10,16 +35,19 @@ SELECT
   c.cidade,
   c.uf,
   c.data_cadastro,
-  MIN(p.data_pedido)                                        AS data_primeiro_pedido,
-  MAX(p.data_pedido)                                        AS data_ultimo_pedido,
-  COUNT(p.pedido_id)                                        AS total_pedidos,
-  COALESCE(SUM(p.valor_liquido), 0)                         AS receita_acumulada,
-  -- "hoje" é a data fixa do dataset (2026-08-31), nunca current_date():
-  -- o dado é gerado uma vez e o número tem que dar igual pra sempre.
-  datediff(DATE'2026-08-31', MAX(p.data_pedido))            AS dias_sem_comprar
+  pc.data_primeiro_pedido,
+  pc.data_ultimo_pedido,
+  COALESCE(pc.total_pedidos, 0)     AS total_pedidos,
+  COALESCE(pc.receita_acumulada, 0) AS receita_acumulada,
+  -- Referência é o último pedido de TODA a base, não a data de hoje: o
+  -- dado é fixo por seed, e todo mundo que rodar tem que chegar no mesmo
+  -- número. Coincide com 2026-08-31, mas calculado, não hardcoded.
+  datediff(
+    (SELECT MAX(data_pedido) FROM lakehouse_rotaperfume.silver.pedidos),
+    pc.data_ultimo_pedido
+  ) AS dias_sem_comprar
 FROM lakehouse_rotaperfume.silver.clientes c
-LEFT JOIN lakehouse_rotaperfume.silver.pedidos p ON p.cliente_id = c.cliente_id
-GROUP BY c.cliente_id, c.razao_social, c.segmento, c.cidade, c.uf, c.data_cadastro;
+LEFT JOIN pedidos_do_cliente pc ON pc.cliente_id = c.cliente_id;
 
 COMMENT ON TABLE lakehouse_rotaperfume.gold.dim_cliente IS
   'Uma linha por cliente. Métricas de relacionamento pré-calculadas para
