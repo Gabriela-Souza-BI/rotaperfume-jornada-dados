@@ -1,0 +1,24 @@
+# Dashboard como CÓDIGO.
+#
+# Ontem a turma viu dashboard clicado. Dashboard clicado não tem diff, não tem
+# revisão e não tem rollback: se alguém apaga um widget na sexta, ninguém sabe
+# o que tinha lá. Este aqui é um JSON no Git, dentro do bundle — sobe junto com
+# o deploy, e desfazer é `git revert`.
+#
+# dataset_catalog e dataset_schema são o motivo de as queries do JSON usarem
+# nome de tabela puro (`FROM fato_vendas`). É o que deixa o mesmo dashboard
+# apontar para dev ou prod sem uma linha editada.
+
+# A chave do recurso é dashboard_comercial e NÃO pode ser renomeada: o bundle
+# identifica o dashboard por ela. Trocar a chave faz o deploy APAGAR o
+# dashboard existente e criar outro, com URL nova — e todo link compartilhado
+# quebra.
+
+resources:
+  dashboards:
+    dashboard_comercial:
+      display_name: Rota do Perfume · Comercial
+      file_path: ../resources/dashboard-comercial.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: gold
