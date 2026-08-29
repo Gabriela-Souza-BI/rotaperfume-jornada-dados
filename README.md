@@ -1,10 +1,12 @@
 # rotaperfume-jornada-dados
 
-> 📚 **About this project:** This is a course-guided project, built to apply Databricks concepts in practice — 
-> business views, metadata auditing, Genie Space — while also exploring Claude Code as a daily development tool. 
-> It's my first hands-on project in this area; the content follows course instructions and is not fully 
-> solo-authored. Future projects will be developed independently.
+📚 **About this project:** This is a course-guided project, built to apply Databricks concepts in practice — business views, metadata auditing, Genie Space — while also exploring Claude Code as a daily development tool.   It's my first hands-on project in this area; the content follows course instructions and is not fully solo-authored. Future projects will be developed independently.
 
+## What this project does
+This is a data pipeline built on Databricks that simulates the data journey of a perfume e-commerce business — ingesting raw sales data, transforming it into clean, reliable tables, and modeling it into business-facing views. Along the way it also covers metadata auditing (tracking where data comes from and how it changes) and a Genie Space setup for natural-language querying over the data.
+The goal wasn't just to move data from point A to B, but to go through the full journey a real analytics engineering project involves: raw ingestion, transformation, validation, documentation, and finally making the data usable for business questions.
+
+## Project structure
 * `src/`: Python source code for this project.
 * `resources/`:  Resource configurations (jobs, pipelines, etc.)
 * `tests/`: Unit tests for the shared Python code.
